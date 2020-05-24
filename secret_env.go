@@ -52,10 +52,7 @@ func isSecretUrl(value string) bool {
 }
 
 func InjectSecretToEnvironment() error {
-	client, err := secretmanager.NewClient(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to create secret manager client: %w", err)
-	}
+	var client *secretmanager.Client
 
 	for _, env := range os.Environ() {
 		pair := strings.SplitN(env, "=", 2)
@@ -65,6 +62,14 @@ func InjectSecretToEnvironment() error {
 
 		if !isSecretUrl(pair[1]) {
 			continue
+		}
+
+		if client == nil {
+			var err error
+			client, err = secretmanager.NewClient(context.Background())
+			if err != nil {
+				return fmt.Errorf("failed to create secret manager client: %w", err)
+			}
 		}
 
 		path, err := parseSecretUrl(pair[1])
